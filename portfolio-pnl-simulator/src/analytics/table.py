@@ -22,7 +22,7 @@ def get_option_chain_table(market: Market, expiry: float) -> pd.DataFrame:
     put_thetas = []
     ivs = []
     forward = get_forward_price(market.spot, market.interest_rate, expiry)
-    norm_strikes = get_norm_strikes(market, expiry, market.vol_surface.get_atm_vol(expiry))
+    norm_strikes = get_norm_strikes(market.spot, market.interest_rate, expiry, market.vol_surface.get_atm_vol(expiry))
     for ns in norm_strikes:
         strike = market.vol_surface.get_strike(ns, forward, expiry)
         option_call = Option(
