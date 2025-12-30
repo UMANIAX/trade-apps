@@ -1,0 +1,33 @@
+# Build directories
+build/
+dist/
+*.o
+*.a
+*.so
+*.dylib
+*.lib
+*.dll
+
+# IDE
+.vscode/
+.idea/
+*.xcodeproj/
+*.sln
+*.vcxproj
+
+# OS
+.DS_Store
+Thumbs.db
+.swap
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Executables
+options-market-making
+*.exe
+
+# Dependencies
+include/Eigen/
