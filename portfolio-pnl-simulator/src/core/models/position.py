@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from src.core.models.security import Security
-from src.core.models.txnside import TxnSide
 
 @dataclass
 class Position:

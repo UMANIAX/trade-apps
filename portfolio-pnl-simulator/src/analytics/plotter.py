@@ -2,24 +2,25 @@ import plotly.graph_objects as go
 
 from src.core.models.volsurface import VolSurface
 
-def plot_smile(vol_surface: VolSurface, expiry: int):
-    smile = vol_surface.surface[expiry]
+def plot_smile(vol_surface: VolSurface, expiry_idx: float):
+    expiry = vol_surface.expiries[expiry_idx]
+    smile = vol_surface.smiles[expiry_idx]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=smile.norm_strikes, y=smile.vol_points, mode='lines+markers', name=f'Smile Expiry {expiry} days'))
     fig.update_layout(title=f'Volatility Smile for Expiry {expiry} days', xaxis_title='Normalized Strike (z)', yaxis_title='Implied Volatility')
     fig.show()
 
 def plot_vol_surface(vol_surface: VolSurface):
-    expiries = sorted(vol_surface.surface.keys())
+    expiries = vol_surface.expiries
     all_norm_strikes = []
-    for expiry in expiries:
-        smile = vol_surface.surface[expiry]
+    for idx in range(len(expiries)):
+        smile = vol_surface.smiles[idx]
         all_norm_strikes.extend(smile.norm_strikes.tolist())
     all_norm_strikes = sorted(set(all_norm_strikes))
 
     z_matrix = []
-    for expiry in expiries:
-        smile = vol_surface.surface[expiry]
+    for idx in range(len(expiries)):
+        smile = vol_surface.smiles[idx]
         vol_row = []
         for ns in all_norm_strikes:
             vol = smile.get_vol(ns)

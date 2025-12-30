@@ -7,7 +7,7 @@ from src.core.models.option import Option
 from src.core.models.optiontype import OptionType
 from src.core.workers.calculator import calculate_risk, get_forward_price, get_forward_strike, price_option
 
-def get_option_chain_table(market: Market, expiry: int) -> pd.DataFrame:
+def get_option_chain_table(market: Market, expiry: float) -> pd.DataFrame:
     strikes = []
     fwd_strikes = []
     call_prices = []

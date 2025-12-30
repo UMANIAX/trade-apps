@@ -8,6 +8,6 @@ from src.core.models.security import Security
 class Option(Security):
     asset: Asset
     strike: float
-    expiry: int
+    expiry: float
     option_type: OptionType
     lot_size: int

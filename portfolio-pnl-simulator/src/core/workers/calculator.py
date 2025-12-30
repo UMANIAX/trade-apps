@@ -9,7 +9,7 @@ from src.core.models.optiontype import OptionType
 from src.core.models.risk import Risk
 from src.core.models.security import Security
 
-def get_forward_strike(market: Market, strike: float, expiry: int) -> float:
+def get_forward_strike(market: Market, strike: float, expiry: float) -> float:
     tte = expiry / 365
     return strike * np.exp(market.interest_rate * tte)
 

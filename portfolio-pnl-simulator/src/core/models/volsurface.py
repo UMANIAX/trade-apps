@@ -24,57 +24,69 @@ class Smile:
 
 @dataclass
 class VolSurface:
-    surface: dict[int, Smile]
+    expiries: np.ndarray # number of days to expiry
+    smiles: np.ndarray
     atm_1m_vol_est: float # 1-month estimate -> something like a VIX
 
-    def __init__(self, atm_1m_vol_est: float, expiries: np.array, skew: float, convexity: float, vol_mean: float, spot: float, interest_rate: float):
+    def __init__(self, expiries: np.array, atm_1m_vol_est: float, skew: float, convexity: float, vol_mean: float, spot: float, interest_rate: float):
+        self.expiries=np.array([])
+        self.smiles=np.array([])
         self.atm_1m_vol_est = atm_1m_vol_est
-        self.surface = {}
-        for expiry in expiries:
+        for idx, expiry in enumerate(expiries):
+            self.expiries = np.append(self.expiries, expiry)
             # atm_var decays to atm_1m_var which then decays to long running var
             weight = np.exp(-abs(expiry - 30)/365)
             atm_vol = np.sqrt(vol_mean**2 + weight * (atm_1m_vol_est**2 - vol_mean**2))
             norm_strikes = get_norm_strikes(spot, interest_rate, expiry, atm_vol)
             for ns in norm_strikes:
                 vol = atm_vol + skew * ns + convexity * ns**2
-                self.add_vol_point(expiry, ns, vol)
+                self.add_vol_point(idx, ns, vol)
         assert not self.has_butterfly_arbitrage()
         assert not self.has_calendar_arbitrage()
 
-    def add_vol_point(self, expiry: int, norm_strike: float, vol: float):
-        if expiry not in self.surface:
-            self.surface[expiry] = Smile(norm_strikes=np.array([]), vol_points=np.array([]))
-        smile = self.surface[expiry]
+    def add_vol_point(self, idx: int, norm_strike: float, vol: float):
+        if idx + 1 > len(self.smiles):
+            self.smiles = np.append(self.smiles, Smile(norm_strikes=np.array([]), vol_points=np.array([])))
+        smile = self.smiles[idx]
         # assumption is that points are added in sorted order
         smile.norm_strikes = np.append(smile.norm_strikes, norm_strike)
         smile.vol_points = np.append(smile.vol_points, vol)
 
-    def get_norm_strike(self, strike: float, forward: float, expiry: int) -> float:
-        smile = self.surface.get(expiry)
-        atm_vol = smile.get_vol(0)
+    def get_norm_strike(self, strike: float, forward: float, expiry: float) -> float:
+        atm_vol = self.get_atm_vol(expiry)
         return get_norm_strike(strike, forward, expiry, atm_vol)
     
-    def get_strike(self, norm_strike: float, forward: float, expiry: int) -> float:
-        smile = self.surface.get(expiry)
-        atm_vol = smile.get_vol(0)
+    def get_strike(self, norm_strike: float, forward: float, expiry: float) -> float:
+        atm_vol = self.get_atm_vol(expiry)
         return get_strike_from_norm_strike(norm_strike, forward, expiry, atm_vol)
 
-    def get_vol_ns(self, norm_strike: float, expiry: int) -> float:
-        smile = self.surface.get(expiry)
-        return smile.get_vol(norm_strike)
+    def get_vol_ns(self, norm_strike: float, expiry: float) -> float:
+        if expiry > self.expiries[-1]:
+            return self.smiles[-1].get_vol(norm_strike)
+        elif expiry < self.expiries[0]:
+            return self.smiles[0].get_vol(norm_strike)
+        else:
+            idx = np.searchsorted(self.expiries, expiry)
+            expiry_up = self.expiries[idx]
+            expiry_down = self.expiries[idx - 1]
+            vol_up = self.smiles[idx].get_vol(norm_strike)
+            vol_down = self.smiles[idx - 1].get_vol(norm_strike)
+            weight = (expiry - expiry_down) / (expiry_up - expiry_down) if expiry_up != expiry_down else 0
+            return vol_down + weight * (vol_up - vol_down)
 
-    def get_vol(self, strike: float, forward: float, expiry: int) -> float:
+    def get_vol(self, strike: float, forward: float, expiry: float) -> float:
         norm_strike = self.get_norm_strike(strike, forward, expiry)
         return self.get_vol_ns(norm_strike, expiry)
     
-    def get_atm_vol(self, expiry: int) -> float:
-        smile = self.surface.get(expiry)
-        return smile.get_vol(0)
+    def get_atm_vol(self, expiry: float) -> float:
+        return self.get_vol_ns(0, expiry)
     
     def has_butterfly_arbitrage(self):
         arb_dict = {}
         no_arb = True
-        for expiry, smile in self.surface.items():
+        for idx in range(len(self.expiries)):
+            expiry = self.expiries[idx]
+            smile = self.smiles[idx]
             T = expiry / 365.0
             norm_strikes = smile.norm_strikes
             vols = smile.vol_points
@@ -94,12 +106,11 @@ class VolSurface:
     def has_calendar_arbitrage(self):
         arb_dict = {}
         no_arb = True
-        expiries = sorted(self.surface.keys())
-        for i in range(len(expiries) - 1):
-            expiry_earlier = expiries[i]
-            expiry_later = expiries[i + 1]
-            smile_earlier = self.surface[expiry_earlier]
-            smile_later = self.surface[expiry_later]
+        for i in range(len(self.expiries) - 1):
+            expiry_earlier = self.expiries[i]
+            expiry_later = self.expiries[i + 1]
+            smile_earlier = self.smiles[i]
+            smile_later = self.smiles[i + 1]
             calendar_arb = False
             #r round norm_strikes to 2 decimal places before the intersect
             norm_strikes_earlier = np.round(smile_earlier.norm_strikes, 2)

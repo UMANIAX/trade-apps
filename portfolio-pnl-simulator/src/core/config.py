@@ -3,6 +3,8 @@ import numpy as np
 from src.core.models.regime import Regime
 from src.core.models.regimeparams import RegimeParams
 
+TIME_STEP = 1 # 1 = 1day
+
 SPX_SPOT = 25000.0
 VIX = 0.22
 INTEREST_RATE = 0.05
