@@ -1,0 +1,16 @@
+Three systems: -
+1. OMM Engine: Quoting (Making and Taking) and Hedging system
+2. LOB Interface: Exchange supporting various order types and order fills/matching
+3. MM Agents: Other market participants interacting with LOB
+    a. These agents are adveserial and try to leave no opportunity unturned in the market
+    b. Each individual agent can help take away one opportunity/edge at a time
+    c. E.g. Agressive Takers, Latency Arbitrageurs
+    d. Liquidity Providers with different risk tolerance
+
+Market evolution: -
+    -> Layer 1: Latent/Hidden Mkt State: Markov Regime, GBM, OU (more like a fair value pricer)
+    -> Layer 2: Order flow generator: Agents consume them and decide order flow (lo/mo, kills, hidden)
+        Depends on Latent State, LOB and trades.
+
+Stages: -
+1. 
