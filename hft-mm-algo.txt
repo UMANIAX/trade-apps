@@ -13,4 +13,8 @@ Market evolution: -
         Depends on Latent State, LOB and trades.
 
 Stages: -
-1. 
+1. Spot-Vol simulation Engine (FV/TV)
+2. LOB
+3. Pricing Engine (how to use LOB and FV/TV to arrive at spot/vol values?)
+4. Hedging Engine
+5. MM Agents
