@@ -18,15 +18,27 @@ Regime MarketSimulator::evolveRegime(const Regime& current) {
     throw std::runtime_error("Regime Transition Failed!");
 }
 
-double MarketSimulator::setSpotShock() {
-    std::normal_distribution<double> normal(0.0, 1.0);
-    spotShock_ = normal(rng_);
+double MarketSimulator::evolveSpot(double current, const Regime& regime, double spotShock) {
+    double dt = config_.TIME_STEP / 365.0;
+    double drift = regime.params.spotDrift;
+    double spotVol = regime.params.spotVol;
+    // spot GBM: dS(t) = μ*S(t)*dt + σ*S(t)*dW --Ito-Calculus--> s(t+1) = s(t) * e^(μ*dt - σ^2*dt/2 + σ*dW) 
+    return current * std::exp(drift * dt - std::pow(spotVol, 2) * dt / 2 + spotVol * std::sqrt(dt) * spotShock);
 }
 
-double MarketSimulator::evolveSpot(double current, const Regime& regime) {
-    double dt = config_.TIME_STEP / 365;
-    double drift = regime.params.spotDrift;
-    double vol = regime.params.spotVol;
-    // spot GBM: dS(t) = μ*dt + σ*S(t)*dW --Ito-Calculus--> s(t+1) = s(t) * e^(μ*dt - σ^2*dt/2 + σ*dW) 
-    return current * std::exp(drift * dt - std::pow(vol, 2) * dt / 2 + vol * std::sqrt(dt) * spotShock_);
+VolSurface MarketSimulator::evolveVol(const VolSurface& current, const Regime& regime, double spotShock) {
+    std::normal_distribution<double> normal(0.0, 1.0);
+
+    double dt = config_.TIME_STEP / 365.0;
+    double volOfVol = regime.params.volOfVol;
+    double volKappa = regime.params.volKappa;
+    double volMean = regime.params.volMean;
+    double rho = regime.params.rho;
+    double skew = regime.params.skew;
+    double convexity = regime.params.convexity;
+    double volShock = rho * spotShock + std::sqrt(1.0 - std::pow(rho, 2)) * normal(rng_);
+    double curr_vol_est = current.getVol1mEst();
+    double next_atm_est = curr_vol_est + volKappa * (volMean - curr_vol_est) * dt + volOfVol * std::sqrt(dt) * volShock;
+
+    // COMPLETE
 }

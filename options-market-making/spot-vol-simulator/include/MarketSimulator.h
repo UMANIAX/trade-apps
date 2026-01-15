@@ -15,10 +15,10 @@ public:
 private:
     SimulatorConfig config_;
     std::mt19937 rng_;
-    double spotShock_;
 
     double setSpotShock();
     Regime evolveRegime(const Regime& regime);
-    double evolveSpot(double spot, const Regime& regime);
-    VolSurface evolveVol(const VolSurface& volSurface, const Regime& regime);
+    double evolveSpot(double spot, const Regime& regime, double spotShock);
+    VolSurface evolveVol(const VolSurface& volSurface, const Regime& regime, double spotShock);
+    MarketState evolveMkt();
 };
